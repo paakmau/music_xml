@@ -274,3 +274,81 @@ impl Score {
         Score::from_node(&doc.root_element())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_attr_ok() {
+        let xml = r#"<slur type="start" />"#;
+        let doc = Document::parse(&xml).unwrap();
+        let node = doc.root_element();
+
+        let slur_ty = parse_attr::<String>(&node, "type");
+        assert!(slur_ty.is_ok());
+        assert_eq!(slur_ty.unwrap(), "start");
+    }
+
+    #[test]
+    fn parse_absent_attr_err() {
+        let xml = r#"<slur />"#;
+        let doc = Document::parse(&xml).unwrap();
+        let node = doc.root_element();
+
+        let slur_ty = parse_attr::<String>(&node, "type");
+        assert!(slur_ty.is_err());
+        assert!(
+            matches!(slur_ty, Err(AttrNotFound { attr, tag }) if attr == "type" && tag == "slur" )
+        );
+    }
+
+    #[test]
+    fn note_pitch_ok() {
+        let xml = r#"
+            <note>
+                <pitch>
+                    <step>E</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>60</duration>
+            </note>"#;
+        let doc = Document::parse(xml).unwrap();
+        let node = doc.root_element();
+
+        let note = Note::from_node(&node);
+        assert!(note.is_ok());
+        assert_eq!(
+            note.unwrap(),
+            Note {
+                note_type: NoteType::Pitch(Pitch {
+                    step: 3,
+                    alter: 0,
+                    octave: 4
+                }),
+                duration: 60
+            }
+        );
+    }
+
+    #[test]
+    fn note_rest_ok() {
+        let xml = r#"
+            <note>
+                <rest />
+                <duration>60</duration>
+            </note>"#;
+        let doc = Document::parse(xml).unwrap();
+        let node = doc.root_element();
+
+        let note = Note::from_node(&node);
+        assert!(note.is_ok());
+        assert_eq!(
+            note.unwrap(),
+            Note {
+                note_type: NoteType::Rest(Rest()),
+                duration: 60
+            }
+        );
+    }
+}
