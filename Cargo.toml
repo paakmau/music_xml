@@ -5,3 +5,6 @@ authors = ["Bomou He <paakmau@outlook.com>"]
 edition = "2021"
 
 [dependencies]
+thiserror = "1"
+zip = "0.6"
+roxmltree = "0.18"
